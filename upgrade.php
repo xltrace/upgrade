@@ -111,6 +111,7 @@ function upgrade($file=NULL){
 		}
 		else{ \XLtrace\Hades\touch($pointer, $instruction, (isset($db['.']) ? $db['.'] : FALSE), $base ); }
 	}
+	if(file_exists('composer.phar') && file_exists('composer.json')){ \XLtrace\Hades\composer('install'); }
 	return TRUE;
 }
 if(!function_exists('\XLtrace\Hades\pcl')){function pcl($str=NULL, $force=FALSE){ /* print command line */
