@@ -37,7 +37,7 @@ function touch($file=NULL, $mode=NULL, $remote=NULL, $directory=NULL){
 			case NULL:
 				if(!(file_exists($directory.$file) && is_dir($directory.$file))){
 					/*debug*/ \XLtrace\Hades\pcl('mkdir '.$directory.$file."\n");
-					// mkdir($file);
+					mkdir($file);
 				}
 				break;
 			default:
@@ -54,7 +54,7 @@ function touch($file=NULL, $mode=NULL, $remote=NULL, $directory=NULL){
 				if($remote !== NULL){
 					$raw = @file_get_contents($remote.$file);
 					/*debug*/ \XLtrace\Hades\pcl('put '.$remote.$file.' >('.strlen($raw).')> '.$directory.$file."\n");
-					//if(strlen($raw)>0){ file_put_contents($directory.$file, $raw); return TRUE; }
+					if(strlen($raw)>0){ file_put_contents($directory.$file, $raw); return TRUE; }
 				} else { return FALSE; }
 				break;
 			default:
@@ -104,6 +104,4 @@ if(in_array($_SERVER['PHP_SELF'], array('upgrade.php','/upgrade.php')) || $_SERV
 	\XLtrace\Hades\upgrade($file);
 	\XLtrace\Hades\patch();
 }
-//phpinfo(32);
-//print '<pre>'; print_r(array($_SERVER['SCRIPT_FILENAME'],__FILE__,$_SERVER['PHP_SELF'])); print '</pre>';
 ?>
