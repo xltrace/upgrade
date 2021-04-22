@@ -15,17 +15,34 @@ if(!function_exists('\XLtrace\Hades\patch')){function patch(){
 	# Single time run script
 	return FALSE;
 }}
+function composer($action=NULL, $output=NULL){
+	if(!file_exists(__DIR__.'/composer.phar') || $action == 'composer-setup'){
+		copy('https://getcomposer.org/installer', 'composer-setup.php');
+        if (hash_file('sha384', 'composer-setup.php') === file_get_contents('https://composer.github.io/installer.sig')) { \XLtrace\Hades\pcl('Installer verified'."\n"); require('composer-setup.php'); } else { \XLtrace\Hades\pcl('Installer corrupt'."\n"); }
+        unlink('composer-setup.php');
+		return FALSE;
+	}
+	if(!class_exists('\Composer\Console\Application')){
+		require_once('phar://'.__DIR__.'/composer.phar/vendor/autoload.php');
+	}
+	//if(!class_exists('\Composer\Console\Application')){ return FALSE; }
+	$cli_args = is_string($action) && !empty($action) ? new \Symfony\Component\Console\Input\StringInput($action) : null;
+	//if (preg_match('/self-?update/', $cli_args)) { $_SERVER['argv'][0] = __DIR__.'/composer.phar'; }
+	$c = new \Composer\Console\Application();
+	$c->setAutoExit(FALSE);
+	$exitcode = $c->run($cli_args, $output);
+	return $output;
+}
 function touch($file=NULL, $mode=NULL, $remote=NULL, $directory=NULL){
 	switch($file){
 		case 'composer.phar':
 			if(!file_exists($file)){
 				/*debug*/ \XLtrace\Hades\pcl('install '.$file."\n");
-				copy('https://getcomposer.org/installer', 'composer-setup.php');
-				if (hash_file('sha384', 'composer-setup.php') === file_get_contents('https://composer.github.io/installer.sig')) { \XLtrace\Hades\pcl('Installer verified'."\n"); require('composer-setup.php'); } else { \XLtrace\Hades\pcl('Installer corrupt'."\n"); }
-				unlink('composer-setup.php');
+				\XLtrace\Hades\composer('composer-setup');
 			}
 			else{
-				/*debug*/ \XLtrace\Hades\pcl('upgrade '.$file."\n");
+				/*debug*/ \XLtrace\Hades\pcl('self update '.$file."\n");
+				\XLtrace\Hades\composer('self-update');
 			}
 			return TRUE; break;
 		case NULL: case '.':
