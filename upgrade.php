@@ -89,9 +89,6 @@ function upgrade($file=NULL){
 		}
 		else{ \XLtrace\Hades\touch($pointer, $instruction, (isset($db['.']) ? $db['.'] : FALSE), $base ); }
 	}
-
-	# run slaves
-	if(isset($_GET['all']) && function_exists('\XLtrace\Hades\run_slaves')){ \XLtrace\Hades\run_slaves('upgrade'); }
 	return TRUE;
 }
 if(!function_exists('\XLtrace\Hades\pcl')){function pcl($str=NULL, $force=FALSE){ /* print command line */
@@ -102,6 +99,7 @@ if(in_array($_SERVER['PHP_SELF'], array('upgrade.php','/upgrade.php')) || $_SERV
 	$file = (isset($_SERVER['argv'][1]) ? $_SERVER['argv'][1] : NULL);
 	\XLtrace\Hades\backup();
 	\XLtrace\Hades\upgrade($file);
+	if(isset($_GET['all']) && function_exists('\XLtrace\Hades\run_slaves')){ \XLtrace\Hades\run_slaves('upgrade.php'); }
 	\XLtrace\Hades\patch();
 }
 ?>
