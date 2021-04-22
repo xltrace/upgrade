@@ -67,7 +67,7 @@ function upgrade_json($file=NULL, $wdefault=FALSE){
 	/*fix*/if($file === NULL){ $file = 'upgrade.json'; $wdefault = ($wdefault===FALSE ? TRUE : $wdefault); }
 	$json = array();
 	if($wdefault !== FALSE){
-		$json = (is_array($wdefault) ? $wdefault : array('.'=>'https://github.com/xltrace/upgrade/raw/master/'));
+		$json = (is_array($wdefault) ? $wdefault : array('.'=>'https://github.com/xltrace/upgrade/raw/main/'));
 	}
 	if(file_exists($file)){
 		$raw = file_get_contents($file);
