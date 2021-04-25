@@ -1,0 +1,15 @@
+{
+    "name": "xltrace/upgrade",
+    "description": "rudementairy upgrade script",
+    "authors": [
+        {
+            "name": "Sent G. Wierda",
+            "email": "sentwierda@gmail.com"
+        }
+    ],
+    "require": {
+		"php":"^5.2 || ^7.0 || ^8.0"
+	},
+    "suggest":{ "jsonplus/jsonplus":"Provides human-readable JSON with several ways to map data, and a CLI worker on linux commandline"},
+	"license":"apache-2.0"
+}

@@ -67,7 +67,7 @@ if(!function_exists('\XLtrace\Hades\current_URI')){function current_URI($el=NULL
   /*fix*/ if(FALSE){foreach(array('module','mapper') as $k){if(isset($_GET[$k]) && !isset($uri['query'][$k])){ $uri['query'][$k] = $_GET[$k]; }}}
   return \XLtrace\Hades\build_url($uri);
 }}
-if(function_exists('\XLtrace\Hades\file_get_json')){function file_get_json($file, $as_array=TRUE, $def=FALSE){
+if(!function_exists('\XLtrace\Hades\file_get_json')){function file_get_json($file, $as_array=TRUE, $def=FALSE){
   /*fix*/ if(preg_match("#[\n]#", $file)){ $file = explode("\n", $file); }
   if(is_array($file)){
     $set = FALSE;
