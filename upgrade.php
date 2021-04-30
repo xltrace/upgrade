@@ -124,8 +124,8 @@ if(!function_exists('\XLtrace\Hades\composer')){function composer($action=NULL, 
 if(!function_exists('\XLtrace\Hades\touch')){function touch($file=NULL, $mode=NULL, $remote=NULL, $directory=NULL){
 	if(is_bool($mode) || $mode === NULL){
 		switch($mode){
-			case TRUE: $mode = array("create"=>TRUE,"clear"=>TRUE,"update":TRUE); break;
-			case NULL: $mode = array("create"=>TRUE,"clear"=>FALSE,"update":FALSE); break;
+			case TRUE: $mode = array("create"=>TRUE,"clear"=>TRUE,"update"=>TRUE); break;
+			case NULL: $mode = array("create"=>TRUE,"clear"=>FALSE,"update"=>FALSE); break;
 			case FALSE: $mode = array("delete"=>TRUE); break;
 		}
 	}
@@ -163,7 +163,7 @@ if(!function_exists('\XLtrace\Hades\touch')){function touch($file=NULL, $mode=NU
 			/*debug*/ \XLtrace\Hades\pcl('mkdir '.$directory.$file."\n");
 			rmdir($file);
 		}
-		if(isset($mode['chmod']) && is_dir($directory.$file)){ \chmod($directory.$file, $mode['chmod']); }
+		if(isset($mode['chmod']) && is_dir($directory.$file)){ \chmod($directory.$file, (is_string($mode['chmod']) && preg_match('#^[0-9]+$#', $mode['chmod']) ? (int) $mode['chmod'] : $mode['chmod'])); }
 		if(isset($mode['mtime']) && is_dir($directory.$file)){ \touch($directory.$file, $mode['mtime']); }
 	} else { //# $file is a file
 		$raw = FALSE;
@@ -181,7 +181,7 @@ if(!function_exists('\XLtrace\Hades\touch')){function touch($file=NULL, $mode=NU
 			unlink($directory.$file);
 			/*debug*/ \XLtrace\Hades\pcl('delete '.$directory.$file."\n");
 		}
-		if(isset($mode['chmod']) && file_exists($directory.$file)){ \chmod($directory.$file, $mode['chmod']); }
+		if(isset($mode['chmod']) && file_exists($directory.$file)){ \chmod($directory.$file, (is_string($mode['chmod']) && preg_match('#^[0-9]+$#', $mode['chmod']) ? (int) $mode['chmod'] : $mode['chmod'])); }
 		if(isset($mode['mtime']) && file_exists($directory.$file)){ \touch($directory.$file, $mode['mtime']); }
 	}
 	return FALSE;
