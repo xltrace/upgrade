@@ -122,54 +122,67 @@ if(!function_exists('\XLtrace\Hades\composer')){function composer($action=NULL, 
 	return $output;
 }}
 if(!function_exists('\XLtrace\Hades\touch')){function touch($file=NULL, $mode=NULL, $remote=NULL, $directory=NULL){
+	if(is_bool($mode) || $mode === NULL){
+		switch($mode){
+			case TRUE: $mode = array("create"=>TRUE,"clear"=>TRUE,"update":TRUE); break;
+			case NULL: $mode = array("create"=>TRUE,"clear"=>FALSE,"update":FALSE); break;
+			case FALSE: $mode = array("delete"=>TRUE); break;
+		}
+	}
 	switch($file){
 		case 'composer.phar':
-			if(!file_exists($file)){
+			if(!file_exists($file) && (!isset($mode['create']) && !isset($mode['delete']) || $mode['create'] === TRUE)){
 				/*debug*/ \XLtrace\Hades\pcl('install '.$file."\n");
 				\XLtrace\Hades\composer('composer-setup');
 			}
-			else{
+			/*security fix*/ if(file_exists('composer-setup.php')){ unlink('composer-setup.php'); }
+			if(file_exists($file) && (isset($mode['upgrade']) && $mode['upgrade'] === TRUE)){
 				/*debug*/ \XLtrace\Hades\pcl('self update '.$file."\n");
 				\XLtrace\Hades\composer('self-update');
+			}
+			if(file_exists($file) && (isset($mode['update']) && $mode['update'] === TRUE)){
+				/*debug*/ \XLtrace\Hades\pcl('update repository with'.$file."\n");
+				\XLtrace\Hades\composer('install');
 			}
 			return TRUE; break;
 		case NULL: case '.':
 			/*debug*/ \XLtrace\Hades\pcl('ingored '.$file."\n");
 			return FALSE; break;
 	}
-	if(substr($file, -1) == '/'){
-		switch($mode){
-			case TRUE:
-				if(is_dir($directory.$file)){
-					/*debug*/ \XLtrace\Hades\pcl('empty '.$directory.$file."\n");
-					#empty directory
-				} //break;
-			case NULL:
-				if(!(file_exists($directory.$file) && is_dir($directory.$file))){
-					/*debug*/ \XLtrace\Hades\pcl('mkdir '.$directory.$file."\n");
-					mkdir($file);
-				}
-				break;
-			default:
-				/*debug*/ \XLtrace\Hades\pcl('mode unsupported for '.$directory.$file."\n + ".print_r($mode, TRUE)."\n");
+	if(substr($file, -1) == '/'){ //# $file is a directory
+		if(is_dir($directory.$file) && isset($mode['clear']) && $mode['clear'] === TRUE){
+			/*debug*/ \XLtrace\Hades\pcl('empty '.$directory.$file."\n");
+			#empty directory
 		}
-	} else {
-		switch($mode){
-			case NULL:
-				if(file_exists($directory.$file)){
-					/*debug*/ \XLtrace\Hades\pcl('ignored existing file '.$directory.$file."\n");
-					return TRUE;
-				}
-			case TRUE:
-				if($remote !== NULL){
-					$raw = @file_get_contents($remote.$file);
-					/*debug*/ \XLtrace\Hades\pcl('put '.$remote.$file.' >('.strlen($raw).')> '.$directory.$file."\n");
-					if(strlen($raw)>0){ file_put_contents($directory.$file, $raw); return TRUE; }
-				} else { return FALSE; }
-				break;
-			default:
-				/*debug*/ \XLtrace\Hades\pcl('mode unsupported for '.$directory.$file."\n + ".print_r($mode, TRUE)."\n");
+		if(!(file_exists($directory.$file) && is_dir($directory.$file))
+			&& ((!isset($mode['create']) && !isset($mode['delete'])) || (isset($mode['create']) && $mode['create'] === TRUE)) ){
+			/*debug*/ \XLtrace\Hades\pcl('mkdir '.$directory.$file."\n");
+			mkdir($file);
 		}
+		if((file_exists($directory.$file) && is_dir($directory.$file)) && isset($mode['delete']) && $mode['delete'] === TRUE){
+			/*debug*/ \XLtrace\Hades\pcl('mkdir '.$directory.$file."\n");
+			rmdir($file);
+		}
+		if(isset($mode['chmod']) && is_dir($directory.$file)){ \chmod($directory.$file, $mode['chmod']); }
+		if(isset($mode['mtime']) && is_dir($directory.$file)){ \touch($directory.$file, $mode['mtime']); }
+	} else { //# $file is a file
+		$raw = FALSE;
+		if($remote !== NULL){
+			$raw = @file_get_contents($remote.$file);
+			/*debug*/ \XLtrace\Hades\pcl('able to put '.$remote.$file.' >('.strlen($raw).')> '.$directory.$file."\n");
+		}
+		if(!is_bool($raw) && is_string($raw)
+			&& ((!isset($mode['create']) && !isset($mode['delete'])) || (isset($mode['create']) && $mode['create'] === TRUE))
+			&& (!isset($mode['clear']) || $mode['clear'] == TRUE) ){
+			file_put_contents($directory.$file, $raw);
+			/*debug*/ \XLtrace\Hades\pcl('saved '.$remote.$file.' to '.$directory.$file."\n");
+		}
+		if(isset($mode['delete']) && $mode['delete'] === TRUE && file_exists($directory.$file)){
+			unlink($directory.$file);
+			/*debug*/ \XLtrace\Hades\pcl('delete '.$directory.$file."\n");
+		}
+		if(isset($mode['chmod']) && file_exists($directory.$file)){ \chmod($directory.$file, $mode['chmod']); }
+		if(isset($mode['mtime']) && file_exists($directory.$file)){ \touch($directory.$file, $mode['mtime']); }
 	}
 	return FALSE;
 }}
@@ -199,7 +212,7 @@ if(!function_exists('\XLtrace\Hades\upgrade')){function upgrade($file=NULL){
 		}
 		else{ \XLtrace\Hades\touch($pointer, $instruction, (isset($db['.']) ? $db['.'] : FALSE), $base ); }
 	}
-	if(file_exists('composer.phar') && file_exists('composer.json')){ \XLtrace\Hades\composer('install'); }
+	//if(file_exists('composer.phar') && file_exists('composer.json')){ \XLtrace\Hades\composer('install'); }
 	return TRUE;
 }}
 if(!function_exists('\XLtrace\Hades\pcl')){function pcl($str=NULL, $force=FALSE){ /* print command line */
