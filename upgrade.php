@@ -163,7 +163,7 @@ if(!function_exists('\XLtrace\Hades\touch')){function touch($file=NULL, $mode=NU
 			/*debug*/ \XLtrace\Hades\pcl('mkdir '.$directory.$file."\n");
 			rmdir($file);
 		}
-		if(isset($mode['chmod']) && is_dir($directory.$file)){ \chmod($directory.$file, (is_string($mode['chmod']) && preg_match('#^[0-9]+$#', $mode['chmod']) ? (int) $mode['chmod'] : $mode['chmod'])); }
+		if(isset($mode['chmod']) && is_dir($directory.$file)){ \chmod($directory.$file, (is_string($mode['chmod']) && preg_match('#^[0-9]+$#', $mode['chmod']) ? (int) base_convert($mode['chmod'], 8, 10) : $mode['chmod'])); }
 		if(isset($mode['mtime']) && is_dir($directory.$file)){ \touch($directory.$file, $mode['mtime']); }
 	} else { //# $file is a file
 		$raw = FALSE;
@@ -181,7 +181,7 @@ if(!function_exists('\XLtrace\Hades\touch')){function touch($file=NULL, $mode=NU
 			unlink($directory.$file);
 			/*debug*/ \XLtrace\Hades\pcl('delete '.$directory.$file."\n");
 		}
-		if(isset($mode['chmod']) && file_exists($directory.$file)){ \chmod($directory.$file, (is_string($mode['chmod']) && preg_match('#^[0-9]+$#', $mode['chmod']) ? (int) $mode['chmod'] : $mode['chmod'])); }
+		if(isset($mode['chmod']) && file_exists($directory.$file)){ \chmod($directory.$file, (is_string($mode['chmod']) && preg_match('#^[0-9]+$#', $mode['chmod']) ? (int) base_convert($mode['chmod'], 8, 10) : $mode['chmod'])); }
 		if(isset($mode['mtime']) && file_exists($directory.$file)){ \touch($directory.$file, $mode['mtime']); }
 	}
 	return FALSE;
