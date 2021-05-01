@@ -104,17 +104,17 @@ if(!function_exists('\XLtrace\Hades\file_put_json')){function file_put_json($fil
 }}
 if(!function_exists('\XLtrace\Hades\composer')){function composer($action=NULL, $output=NULL){
 	if(!file_exists(__DIR__.'/composer.phar') || $action == 'composer-setup'){
-        $bool = FALSE;
+		$bool = FALSE;
 		copy('https://getcomposer.org/installer', 'composer-setup.php');
-        if (hash_file('sha384', 'composer-setup.php') === file_get_contents('https://composer.github.io/installer.sig')) { \XLtrace\Hades\pcl('Installer verified'."\n"); require('composer-setup.php'); $bool = TRUE; } else { \XLtrace\Hades\pcl('Installer corrupt'."\n"); }
-        unlink('composer-setup.php');
+		if (hash_file('sha384', 'composer-setup.php') === file_get_contents('https://composer.github.io/installer.sig')) { \XLtrace\Hades\pcl('Installer verified'."\n"); require('composer-setup.php'); $bool = TRUE; } else { \XLtrace\Hades\pcl('Installer corrupt'."\n"); }
+		unlink('composer-setup.php');
 		return $bool;
 	}
 	if(!class_exists('\Composer\Console\Application')){
 		require_once('phar://'.__DIR__.'/composer.phar/vendor/autoload.php');
 	}
 	//if(!class_exists('\Composer\Console\Application')){ return FALSE; }
-	$cli_args = is_string($action) && !empty($action) ? new \Symfony\Component\Console\Input\StringInput($action) : null;
+	$cli_args = (is_string($action) && !empty($action) ? new \Symfony\Component\Console\Input\StringInput($action) : null);
 	//if (preg_match('/self-?update/', $cli_args)) { $_SERVER['argv'][0] = __DIR__.'/composer.phar'; }
 	$c = new \Composer\Console\Application();
 	$c->setAutoExit(FALSE);
@@ -142,7 +142,7 @@ if(!function_exists('\XLtrace\Hades\touch')){function touch($file=NULL, $mode=NU
 			}
 			if(file_exists($file) && (isset($mode['update']) && $mode['update'] === TRUE)){
 				/*debug*/ \XLtrace\Hades\pcl('update repository with'.$file."\n");
-				\XLtrace\Hades\composer('install');
+				\XLtrace\Hades\composer((file_exists('composer.lock') ? 'update' : 'install'));
 			}
 			return TRUE; break;
 		case NULL: case '.':
