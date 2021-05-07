@@ -3,9 +3,56 @@ namespace XLtrace\Hades;
 
 if(file_exists('settings.php')){ require_once('settings.php'); }
 
-if(!function_exists('\XLtrace\Hades\backup')){function backup($file=NULL){
+if(!function_exists('\XLtrace\Hades\backup')){function backup($file=NULL, $mode=TRUE){
+	# rearrange parameters
+	if(is_bool($file) || is_array($file)){ $mode = $file; $file = NULL; }
+	if(!is_array($mode)){
+		switch($mode){
+			case TRUE: $mode = array("all"=>TRUE); break;
+			case NULL: $mode = array("upgradable"=>TRUE); break;
+			case FALSE: $mode = array("upgradable"=>FALSE); break;
+			default: $mode = array();
+		}
+	}
+	if(isset($mode['file'])){ $file = $mode['file']; } $mode['file'] =& $file;
+	if(!isset($mode['select'])){ $mode['select'] = array(); }
+	if(is_string($mode['select'])){
+		if(preg_match('#upgrade\.json$#', $mode['select']) && file_exists($mode['select'])){
+			$mode['by'] = $mode['select'];
+			$list = \XLtrace\Hades\file_get_json($mode['select'], TRUE, array());
+			$mode['select'] = array();
+			foreach($list as $k=>$v){ if(!in_array($k, array('.','..')) /* && file_exists($k) */){ $mode['select'][] = $k;} }
+		}
+		else{ $mode['select'] = array(); }
+	}
+	# run shortcuts
+	if(isset($mode['all']) && $mode['all'] == TRUE){
+		$mode['select'] = \XLtrace\Hades\scanAllDir(__DIR__, array('.git','vendor'));
+	}
+	elseif(isset($mode['upgradable']) && is_bool($mode['upgradable'])){
+		$list = \XLtrace\Hades\scanAllDir(__DIR__, array('.git','vendor'));
+		$u = array();
+		foreach($list as $k){ if(preg_match('#upgrade\.json$#', $k)){ $u[] = $k; } }
+		$v = array_keys( \XLtrace\Hades\file_get_json($u, TRUE, array()) );
+		/*debug*/ $mode['u'] = $u; $mode['v'] = $v;
+		foreach($list as $k){ if( ($mode['upgradable'] ? in_array($k, $v) : !in_array($k, $v)) ){ $mode['select'][] = $k; } }
+	}
+	# ensure filename of archive is valid
+	if($file !== NULL){
+		/*security fix*/ $file = basename($file);
+		/*extention fix*/ if(!preg_match('#\.(zip)$#i', $file)){ $file = $file.'.zip'; }
+	} else { $file = FALSE; }
+
+	/*debug*/ return $mode;
+
 	# Create backup of local installation
-	return FALSE;
+	$raw = NULL;
+
+	# save $file
+	if(strlen($file) > 4){
+		//$res = file_put_contents($backupdir.$file, $raw);
+	} else { $file = FALSE; }
+	return ($file === FALSE ? $raw : $res);
 }}
 if(!function_exists('\XLtrace\Hades\restore')){function restore($file=NULL){
 	# Restore backup
@@ -14,6 +61,23 @@ if(!function_exists('\XLtrace\Hades\restore')){function restore($file=NULL){
 if(!function_exists('\XLtrace\Hades\patch')){function patch(){
 	# Single time run script
 	return FALSE;
+}}
+if(!function_exists('\XLtrace\Hades\scanAllDir')){function scanAllDir($dir, $exclude=array()){
+  $result = array();
+  foreach(scandir($dir) as $filename){
+    if($filename[0] === '.') continue;
+		if(in_array($filename, $exclude)) continue;
+    $filepath = $dir.'/'.$filename;
+    if(is_dir($filepath)){
+      foreach(scanAllDir($filepath) as $childfilename){
+        $result[] = $filename.'/'.$childfilename;
+      }
+    }
+    else{
+      $result[] = $filename;
+    }
+  }
+  return $result;
 }}
 if(!function_exists('\XLtrace\Hades\slaves_file')){function slaves_file(){ return __DIR__.'/slaves.json'; }}
 if(!function_exists('\XLtrace\Hades\run_slaves')){function run_slaves($action=NULL, $list=array()){ //herhaps the naming is politically incorrect; should be changed!
@@ -68,7 +132,7 @@ if(!function_exists('\XLtrace\Hades\current_URI')){function current_URI($el=NULL
   return \XLtrace\Hades\build_url($uri);
 }}
 if(!function_exists('\XLtrace\Hades\file_get_json')){function file_get_json($file, $as_array=TRUE, $def=FALSE){
-  /*fix*/ if(preg_match("#[\n]#", $file)){ $file = explode("\n", $file); }
+  /*fix*/ if(is_string($file) && preg_match("#[\n]#", $file)){ $file = explode("\n", $file); }
   if(is_array($file)){
     $set = FALSE;
     foreach($file as $i=>$f){
