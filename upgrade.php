@@ -4,8 +4,34 @@ namespace XLtrace\Hades;
 if(file_exists('settings.php')){ require_once('settings.php'); }
 
 if(!function_exists('\XLtrace\Hades\backup')){function backup($file=NULL, $mode=TRUE){
+	$mode = \XLtrace\Hades\backup_conf($file, $mode); $file = $mode['file'];
+	/*debug*/ print_r($mode);
+	# Create backup of local installation
+	$zip = new \ZipArchive();
+	if(isset($mode['file']) && !is_bool($file) && preg_match('#\.zip$#', $file)){ $tempfile = (isset($mode['backup-dir']) ? $mode['backup-dir'] : __DIR__).'/'.$mode['file']; }
+	else{ $resource = tmpfile(); $tempfile = stream_get_meta_data($resource)['uri']; }
+	/*debug*/ print 'zip archive file: '.$tempfile."\n";
+	if($zip->open($tempfile, \ZipArchive::CREATE)!==TRUE){ return FALSE; }
+	foreach($mode['select'] as $i=>$f){
+		$zip->addFile(__DIR__.'/'.$f, $f);
+	}
+	/*debug*/ print_r($zip); var_dump($zip);
+	$res = $zip->close();
+
+	# handle $file existence
+	if(!(strlen($file) > 4)){ $file = FALSE; $raw = file_get_contents($tempfile); unlink($tempfile); }
+	return ($file === FALSE ? $raw : $res);
+}}
+if(!function_exists('\XLtrace\Hades\ignorable_directories')){function ignorable_directories($set=FALSE){
+	if(!is_array($set)){switch($set){
+		case FALSE: $set = array('.git','vendor'); break;
+		default: $set = array();
+	}}
+	return $set;
+}}
+if(!function_exists('\XLtrace\Hades\backup_conf')){function backup_conf($file=NULL, $mode=TRUE){
 	# rearrange parameters
-	if(is_bool($file) || is_array($file)){ $mode = $file; $file = NULL; }
+	if(is_bool($file) || is_array($file) || $file === NULL){ $mode = $file; $file = NULL; }
 	if(!is_array($mode)){
 		switch($mode){
 			case TRUE: $mode = array("all"=>TRUE); break;
@@ -16,25 +42,25 @@ if(!function_exists('\XLtrace\Hades\backup')){function backup($file=NULL, $mode=
 	}
 	if(isset($mode['file'])){ $file = $mode['file']; } $mode['file'] =& $file;
 	if(!isset($mode['select'])){ $mode['select'] = array(); }
-	if(is_string($mode['select'])){
+	if(is_string($mode['select']) || isset($mode['by'])){
 		if(preg_match('#upgrade\.json$#', $mode['select']) && file_exists($mode['select'])){
 			$mode['by'] = $mode['select'];
-			$list = \XLtrace\Hades\file_get_json($mode['select'], TRUE, array());
-			$mode['select'] = array();
-			foreach($list as $k=>$v){ if(!in_array($k, array('.','..')) /* && file_exists($k) */){ $mode['select'][] = $k;} }
 		}
-		else{ $mode['select'] = array(); }
+		$list = \XLtrace\Hades\file_get_json($mode['by'], TRUE, array());
+		$mode['select'] = array();
+		foreach($list as $k=>$v){ if(!in_array($k, array('.','..')) /* && file_exists($k) */){ $mode['select'][] = $k;} }
 	}
+	$d = (isset($mode['ignore']) ? $mode['ignore'] : FALSE);
 	# run shortcuts
 	if(isset($mode['all']) && $mode['all'] == TRUE){
-		$mode['select'] = \XLtrace\Hades\scanAllDir(__DIR__, array('.git','vendor'));
+		$mode['select'] = \XLtrace\Hades\scanAllDir(__DIR__, \XLtrace\Hades\ignorable_directories($d));
 	}
 	elseif(isset($mode['upgradable']) && is_bool($mode['upgradable'])){
-		$list = \XLtrace\Hades\scanAllDir(__DIR__, array('.git','vendor'));
+		$list = \XLtrace\Hades\scanAllDir(__DIR__, \XLtrace\Hades\ignorable_directories($d));
 		$u = array();
 		foreach($list as $k){ if(preg_match('#upgrade\.json$#', $k)){ $u[] = $k; } }
 		$v = array_keys( \XLtrace\Hades\file_get_json($u, TRUE, array()) );
-		/*debug*/ $mode['u'] = $u; $mode['v'] = $v;
+		/*debug*/ if(isset($mode['debug']) && $mode['debug'] === TRUE){ $mode['upgrade.json'] = $u; $mode['upgrade-files'] = $v; }
 		foreach($list as $k){ if( ($mode['upgradable'] ? in_array($k, $v) : !in_array($k, $v)) ){ $mode['select'][] = $k; } }
 	}
 	# ensure filename of archive is valid
@@ -43,16 +69,7 @@ if(!function_exists('\XLtrace\Hades\backup')){function backup($file=NULL, $mode=
 		/*extention fix*/ if(!preg_match('#\.(zip)$#i', $file)){ $file = $file.'.zip'; }
 	} else { $file = FALSE; }
 
-	/*debug*/ return $mode;
-
-	# Create backup of local installation
-	$raw = NULL;
-
-	# save $file
-	if(strlen($file) > 4){
-		//$res = file_put_contents($backupdir.$file, $raw);
-	} else { $file = FALSE; }
-	return ($file === FALSE ? $raw : $res);
+	return $mode;
 }}
 if(!function_exists('\XLtrace\Hades\restore')){function restore($file=NULL){
 	# Restore backup
@@ -65,7 +82,7 @@ if(!function_exists('\XLtrace\Hades\patch')){function patch(){
 if(!function_exists('\XLtrace\Hades\scanAllDir')){function scanAllDir($dir, $exclude=array()){
   $result = array();
   foreach(scandir($dir) as $filename){
-    if($filename[0] === '.') continue;
+		if(in_array($filename, array('.','..'))) continue; //if($filename[0] === '.') continue;
 		if(in_array($filename, $exclude)) continue;
     $filepath = $dir.'/'.$filename;
     if(is_dir($filepath)){
