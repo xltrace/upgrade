@@ -5,17 +5,17 @@ if(file_exists('settings.php')){ require_once('settings.php'); }
 
 if(!function_exists('\XLtrace\Hades\backup')){function backup($file=NULL, $mode=TRUE){
 	$mode = \XLtrace\Hades\backup_conf($file, $mode); $file = $mode['file'];
-	/*debug*/ print_r($mode);
+	//*debug*/ print_r($mode);
 	# Create backup of local installation
 	$zip = new \ZipArchive();
 	if(isset($mode['file']) && !is_bool($file) && preg_match('#\.zip$#', $file)){ $tempfile = (isset($mode['backup-dir']) ? $mode['backup-dir'] : __DIR__).'/'.$mode['file']; }
 	else{ $resource = tmpfile(); $tempfile = stream_get_meta_data($resource)['uri']; }
-	/*debug*/ print 'zip archive file: '.$tempfile."\n";
+	//*debug*/ print 'zip archive file: '.$tempfile."\n";
 	if($zip->open($tempfile, \ZipArchive::CREATE)!==TRUE){ return FALSE; }
 	foreach($mode['select'] as $i=>$f){
 		$zip->addFile(__DIR__.'/'.$f, $f);
 	}
-	/*debug*/ print_r($zip); var_dump($zip);
+	//*debug*/ print_r($zip); var_dump($zip);
 	$res = $zip->close();
 
 	# handle $file existence
@@ -302,9 +302,9 @@ if(!function_exists('\XLtrace\Hades\pcl')){function pcl($str=NULL, $force=FALSE)
 
 if(in_array($_SERVER['PHP_SELF'], array('upgrade.php','/upgrade.php')) || $_SERVER['SCRIPT_FILENAME'] == __FILE__){
 	$file = (isset($_SERVER['argv'][1]) ? $_SERVER['argv'][1] : NULL);
-	\XLtrace\Hades\backup();
+	//\XLtrace\Hades\backup();
 	\XLtrace\Hades\upgrade($file);
 	if(isset($_GET['all']) && function_exists('\XLtrace\Hades\run_slaves')){ \XLtrace\Hades\run_slaves('upgrade.php'); }
-	\XLtrace\Hades\patch();
+	//\XLtrace\Hades\patch();
 }
 ?>
