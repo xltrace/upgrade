@@ -297,14 +297,17 @@ if(!function_exists('\XLtrace\Hades\upgrade')){function upgrade($file=NULL){
 	return TRUE;
 }}
 if(!function_exists('\XLtrace\Hades\pcl')){function pcl($str=NULL, $force=FALSE){ /* print command line */
-	if((isset($_SERVER['argv'][0]) && $_SERVER['argv'][0] == $_SERVER['PHP_SELF']) || $force === TRUE){ print $str; }
+	if((isset($_SERVER['argv'][0]) && $_SERVER['argv'][0] == $_SERVER['PHP_SELF']) || $force === TRUE || (isset($_GET['debug']) && $_GET['debug'] == 'true') ){ print $str; }
 }}
 
+//*debug*/ print_r($_SERVER);
 if(in_array($_SERVER['PHP_SELF'], array('upgrade.php','/upgrade.php')) || $_SERVER['SCRIPT_FILENAME'] == __FILE__){
-	$file = (isset($_SERVER['argv'][1]) ? $_SERVER['argv'][1] : NULL);
+	/*debug*/ if(isset($_GET['debug'])){ print '<pre>'; }
+	$file = (isset($_SERVER['argv'][1]) ? $_SERVER['argv'][1] : (isset($_GET['file']) && file_exists($_GET['file']) ? $_GET['file'] : NULL));
 	//\XLtrace\Hades\backup();
 	\XLtrace\Hades\upgrade($file);
 	if(isset($_GET['all']) && function_exists('\XLtrace\Hades\run_slaves')){ \XLtrace\Hades\run_slaves('upgrade.php'); }
 	//\XLtrace\Hades\patch();
+	/*debug*/ if(isset($_GET['debug'])){ print '</pre>'; }
 }
 ?>
